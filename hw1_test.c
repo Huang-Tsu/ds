@@ -34,19 +34,17 @@ void Encode(){
 
 	scanf("%d%d", &n, &m);
 	scanf("%s", input_str);
+	str_len = strlen(input_str);
+	chunck_len = str_len/n;
 
-	str_len = strlen(input_str);	//get input string length
-	chunck_len = str_len/n;			//get the length of each chunck
 
-	char n_str_chuncks[n][MAX_LEN];	
+	char n_str_chuncks[n][MAX_LEN];
 	int n_num_chuncks[n];
 
 	for(i=0; i<n; i++){
-			//first divide string into different character array
 		for(j=0; j<chunck_len; j++){
 			n_str_chuncks[i][j] = input_str[i*chunck_len+j]; 	
 		}
-			//then copy and interpret each character array into integer array
 		n_str_chuncks[i][j] = '\0';
 		n_num_chuncks[i] = atoi(n_str_chuncks[i]);
 	}
@@ -83,7 +81,7 @@ void Decode(){
 			scanf("%lf", &matrix[i][j]);
 		}
 	}
-		//start Gauss elimination
+		//reduce row downward
 	for(i=0; i<n; i++){	//i point to the row now
 			//find leading one
 		if(matrix[i][i] == 0){
@@ -99,17 +97,25 @@ void Decode(){
 		for(j=i; j<n+1; j++){	//j point to the colum number of row now
 			matrix[i][j] /= coefficient;
 		}
-			//reduce downward
-		for(j=i+1; j<n; j++){	//j point to the number of changed row
-			if(matrix[j][i] == 0)	//若要被消掉的列，有leading，1在的行為0，則直接進到下一列
+		for(j=0; j<n; j++){	//j point to the number of changed row
+			if(matrix[j][i]==0 || j==i)
 				continue;
 
 			coefficient = matrix[j][i];
 			for(k=i; k<n+1; k++){	//k point to the colum number of changed row
 				matrix[j][k] -= matrix[i][k]*coefficient;
 			}
+									puts("after reduce");
+									for(int h=0; h<n; h++){
+										for(int s=0; s<n+1; s++){
+											printf("%d ", (int)matrix[h][s]);
+										}
+										puts("");
+									}
+										puts("-----------");
 		}
 	}
+	/*
 		//reduce row upward
 	for(i=n-1; i>0; i--){	//i point to row number now
 		for(j=i-1; j>=0; j--){	//j point to changed row number
@@ -122,6 +128,7 @@ void Decode(){
 			}
 		}
 	}
+	*/
 	for(i=0; i<n; i++){
 		printf("%d", (int)matrix[i][n]);
 	}
@@ -142,3 +149,13 @@ void SwapRow(double *row1, double *row2, int row_len){
 		row2[i] = temp;
 	}
 }
+		/*
+									puts("After introduce leading 1");
+									for(int h=0; h<n; h++){
+										for(int s=0; s<n+1; s++){
+											printf("%d ", (int)matrix[h][s]);
+										}
+										puts("");
+									}
+										puts("-----------");
+										*/
