@@ -57,7 +57,7 @@ int main(){
 	}
 
 			//build tree
-			//using BST
+			//using BFS
 		PushToQueue(0);
 		g_visited[0] = 1;
 		while(!IsEmpty()){	//when queue is not empty, execute
