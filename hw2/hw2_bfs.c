@@ -50,52 +50,53 @@ int main(){
 			InitNode(node1);
 		if(!vector[node2].child_cnt)
 			InitNode(node2);
-		
+
 			//build relation between node1 node2.
 		PushBack(node1, node2);	
 		PushBack(node2, node1);
 	}
 
-			//build tree
-			//using BFS
-		PushToQueue(0);
-		g_visited[0] = 1;
-		while(!IsEmpty()){	//when queue is not empty, execute
-			node_now = Pop();	//pop one node from queue, and add every child of this node into queue
-				for(int j=0; j<vector[node_now].child_cnt; j++){
-					child_now = vector[node_now].child_list[j];
-					if(!g_visited[child_now]){			//check whether this child have not been visited
-						g_visited[child_now] = 1;
-						g_level[child_now] = g_level[node_now]+1;	//set level
-						max_level = g_level[child_now]>max_level? g_level[child_now] : max_level; //renew max_level
-						g_parent[child_now] = node_now;
-						PushToQueue(child_now);		//push this child into queue
-					}	
-				}
+		//build tree
+		//using BFS
+	PushToQueue(0);
+	g_visited[0] = 1;
+	while(!IsEmpty()){	//when queue is not empty, execute
+		node_now = Pop();	//pop one node from queue, and add every child of this node into queue
+		for(int j=0; j<vector[node_now].child_cnt; j++){
+			child_now = vector[node_now].child_list[j];
+			if(!g_visited[child_now]){			//check whether this child have not been visited
+				g_visited[child_now] = 1;
+				g_level[child_now] = g_level[node_now]+1;	//set level
+				max_level = g_level[child_now]>max_level? g_level[child_now] : max_level; //renew max_level
+				g_parent[child_now] = node_now;
+				PushToQueue(child_now);		//push this child into queue
+			}	
 		}
-		
-			//Count total cost
-		g_head = g_tail = -1; //reset idxes of queuq, because we will use it later.
-		for(int i=max_level; i>0; i--){
-			for(int j=0; j<node_cnt; j++){	//push nodes of level i into queue
-				if(g_level[j] == i)
-					PushToQueue(j);
-			}
-			while(!IsEmpty()){	//each time pop one node from queue, and count the coust of its weight, then add its weight to itsparent.
-				node_now = Pop();
-				if(node_now == 0)
-					break;
+	}
 
-				total_cost += CountCurrentCost(g_weight[node_now]);	//count the cost of current node.
-				g_weight[g_parent[node_now]] += g_weight[node_now];	//increase the weight of parent by the weight of node_now.
-			}
+		//Count total cost
+	g_head = g_tail = -1; //reset idxes of queuq, because we will use it later.
+	for(int i=max_level; i>0; i--){
+		for(int j=0; j<node_cnt; j++){	//push nodes of level i into queue
+			if(g_level[j] == i)
+				PushToQueue(j);
 		}
+		while(!IsEmpty()){	//each time pop one node from queue, and count the cost of its weight, then add its weight to its parent.
+			node_now = Pop();
+			if(node_now == 0)
+				break;
 
-			//print result
-		printf("%d %d\n", node_cnt, total_cost);
-		for(int i=0; i<node_cnt; i++){
-			printf("%d %d\n", i, g_parent[i]);
+			total_cost += CountCurrentCost(g_weight[node_now]);	//count the cost of current node.
+			g_weight[g_parent[node_now]] += g_weight[node_now];	//increase the weight of parent by the weight of node_now.
 		}
+	}
+
+		//print result
+	printf("%d %d\n", node_cnt, total_cost);
+	for(int i=0; i<node_cnt; i++){
+		printf("%d %d\n", i, g_parent[i]);
+	}
+
 	return 0;
 }
 void InitNode(int idx){
