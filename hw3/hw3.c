@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <limits.h> //for INT_MAX
+	#include <unistd.h>
 
 typedef struct Links Links;
 typedef struct Nodes Nodes;
@@ -19,12 +20,11 @@ struct Links{
 	double affectance;
 }*g_links;
 
-//int *g_solution_links_id;
-//int g_solution_link_cnt = 0;
+int *g_select_links;
+int g_select_links_cnt = 0;
 int g_links_cnt_total;
 int g_links_cnt_now;
 int g_nodes_cnt;
-int g_select_link_cnt = 0;
 int g_noise;
 double g_power;
 
@@ -48,7 +48,7 @@ int main(){
 
 	g_nodes = (Nodes*)calloc(g_nodes_cnt, sizeof(Nodes));
 	g_links = (Links*)calloc(g_links_cnt_total, sizeof(Links));
-	//g_solution_links_id = (int*)calloc(g_links_cnt, sizeof(int));
+	g_select_links = (int*)calloc(g_links_cnt_total, sizeof(int));
 
 		//input nodes
 	for(i=0; i<g_nodes_cnt; i++){
@@ -81,8 +81,7 @@ int main(){
 	}
 	
 		//print result
-		printf("-----------\n");
-	printf("%d\n", g_select_link_cnt);
+	printf("%d\n", g_select_links_cnt);
 	for(i=0; i<g_links_cnt_total; i++){
 		if(g_links[i].select){
 			printf("%d %d %d\n", i, g_links[i].sender, g_links[i].receiver);
@@ -91,6 +90,7 @@ int main(){
 	
 	free(g_nodes);
 	free(g_links);
+	free(g_select_links);
 	return 0;
 }
 double GetTransmitPower(int sender, int receiver){
@@ -103,8 +103,10 @@ void DeleteNode(int link_id){
 	for(int i=0; i<g_links_cnt_total; i++){
 		if(g_links[i].sender==g_links[link_id].sender ||
 			 g_links[i].receiver==g_links[link_id].receiver){
-			g_links[i].exist = 0;
-			g_links_cnt_now --;
+			if(g_links[i].exist){
+				g_links[i].exist = 0;
+				g_links_cnt_now --;
+			}
 		}
 	}
 }
@@ -112,7 +114,7 @@ void UpdateAffectance(int new_link_id){
 		//update affectance of links in possible links set after adding a new link into solution set
 		//the affected degree of newly selected link by link[i] is computed by the transmit power from link[i]'s sender to newly selected link's receiver
 	for(int i=0; i<g_links_cnt_total; i++){
-		if(g_links[i].exist==1 && g_links[i].select==0 && i!=new_link_id){	//if this link exists and haven't been selected, and is not new node, then update
+		if(g_links[i].exist==1 && g_links[i].select==0){	//if this link exists and haven't been selected, then update
 			//the affected degree of newly selected link by link[i] is computed by the transmit power from link[i]'s sender to newly selected link's receiver
 			g_links[i].affectance += GetTransmitPower(g_links[i].sender, g_links[new_link_id].receiver);	//compute how much newly selected link will be affect by this link
 		}
@@ -135,8 +137,9 @@ void UpdateTolerance(int new_link_id){
 	}
 }
 void AddLinkToSolutionSet(int new_link_id){
+	g_select_links[g_select_links_cnt++] = new_link_id;
 	g_links[new_link_id].select = 1;
-	g_select_link_cnt ++;
+	g_select_links_cnt ++;
 	DeleteNode(g_links[new_link_id].sender);
 	DeleteNode(g_links[new_link_id].receiver);
 	UpdateTolerance(new_link_id);
@@ -145,16 +148,13 @@ void AddLinkToSolutionSet(int new_link_id){
 int CheckFeasibility(int new_link_id){
 		//check whether this new_link will break the belence in solution set, if so, discard it
 		//return value will be 1 or 0, 1 stand for feasible, 0 otherwise
-	int tolerance;
-	for(int i=0; i<g_links_cnt_total; i++){
-		if(g_links[i].select == 1){	//we only check the links in soluiton set
-			tolerance = g_links[i].tolerance - GetTransmitPower(g_links[new_link_id].sender, g_links[i].receiver);	//from new link to checked node
-			if(tolerance <= 0){
+	for(int i=0; i<g_select_links_cnt; i++){
+					//from new link to checked node
+			if(g_links[g_select_links[i]].tolerance < GetTransmitPower(g_links[new_link_id].sender, g_links[g_select_links[i]].receiver)){
 				g_links[new_link_id].exist = 0;		//discard new_link
-				g_links_cnt_total --;
+				g_links_cnt_now --;
 				return 0;	//return infeasible
 			}
-		}
 	}
 	return 1;		//return feasible
 }
@@ -163,7 +163,7 @@ int FindMinAffectLink(){
 		//it will be the next link to be add to solution set
 		//because we want to minimize the affectance to links in solution set
 	int min_affectance_id;
-	int min_affectance = INT_MAX;
+	double min_affectance = (double)INT_MAX;
 	while(g_links_cnt_now){
 		for(int i=0; i<g_links_cnt_total; i++){
 			if(g_links[i].exist==1 && g_links[i].select==0){	//if this link exists and haven't been selected, and is not new node, then check it
@@ -174,7 +174,7 @@ int FindMinAffectLink(){
 			}
 		}
 			//check whether this link is feasible in solution set. If so, return it's id. If not, find link with minimal again
-		if(!CheckFeasibility(min_affectance_id))
+		if(CheckFeasibility(min_affectance_id))
 			break;
 		else 
 			continue;
