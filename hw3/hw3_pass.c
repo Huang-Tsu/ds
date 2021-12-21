@@ -59,7 +59,7 @@ int main(){
 
 	for(i=1; i<g_links_cnt; i++){
 		if(g_links[i].select==0 && g_links[i].exist==1){
-			if(CheckFeasibility(i)==1)
+			if(CheckFeasibility(i))
 				AddLinkToSolutionSet(i);
 		}
 	}
