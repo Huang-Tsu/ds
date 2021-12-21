@@ -18,6 +18,7 @@ struct Links{
 	int receiver;
 	double tolerance;
 	double affectance;
+		int run;
 }*g_links;
 
 int *g_select_links;
@@ -98,11 +99,11 @@ double GetTransmitPower(int sender, int receiver){
 	double distance = sqrt(pow(g_nodes[sender].x-g_nodes[receiver].x, 2) + pow(g_nodes[sender].y-g_nodes[receiver].y, 2));
 	return g_power/pow(distance, 3);
 }
-void DeleteNode(int link_id){
+void DeleteNode(int node_id){
 		//link_id is a link being selected, we want to delete all the link who also connect to the node of selected link 
 	for(int i=0; i<g_links_cnt_total; i++){
-		if(g_links[i].sender==g_links[link_id].sender ||
-			 g_links[i].receiver==g_links[link_id].receiver){
+		if(g_links[i].sender==node_id ||
+			 g_links[i].receiver==node_id){
 			if(g_links[i].exist){
 				g_links[i].exist = 0;
 				g_links_cnt_now --;
@@ -114,10 +115,20 @@ void UpdateAffectance(int new_link_id){
 		//update affectance of links in possible links set after adding a new link into solution set
 		//the affected degree of newly selected link by link[i] is computed by the transmit power from link[i]'s sender to newly selected link's receiver
 	for(int i=0; i<g_links_cnt_total; i++){
+					if(g_links[i].run == 0){
 		if(g_links[i].exist==1 && g_links[i].select==0){	//if this link exists and haven't been selected, then update
 			//the affected degree of newly selected link by link[i] is computed by the transmit power from link[i]'s sender to newly selected link's receiver
 			g_links[i].affectance += GetTransmitPower(g_links[i].sender, g_links[new_link_id].receiver);	//compute how much newly selected link will be affect by this link
+					for(int j=i; j<g_links_cnt_total; j++){
+						if(g_links[j].sender == g_links[i].sender){
+							g_links[j].affectance = g_links[i].affectance;
+							g_links[j].run = 1;
+						}
+					}
+					//fprintf(stderr, "link:%d, affectance:%f\n", i, g_links[i].affectance);
 		}
+					}
+							g_links[i].run = 0;
 	}
 }
 void UpdateTolerance(int new_link_id){
@@ -139,7 +150,6 @@ void UpdateTolerance(int new_link_id){
 void AddLinkToSolutionSet(int new_link_id){
 	g_select_links[g_select_links_cnt++] = new_link_id;
 	g_links[new_link_id].select = 1;
-	g_select_links_cnt ++;
 	DeleteNode(g_links[new_link_id].sender);
 	DeleteNode(g_links[new_link_id].receiver);
 	UpdateTolerance(new_link_id);
