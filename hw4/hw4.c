@@ -23,7 +23,7 @@ struct BitField{
 
 int main(){
 	int n, m, p;
-	int input;
+	unsigned int input;
 	
 	scanf("%d%d%d", &p, &m, &n);
 
